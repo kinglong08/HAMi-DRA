@@ -155,6 +155,12 @@ certs:
 drivers:
   nvidia:
     enabled: true
+    daemonSet:
+      nodeSelector:
+        gpu: "on"
+      tolerations: []
+      affinity: {}
+      
     # If you are using gpu driver on host, you need to set this to false
     containerDriver: true
     image:

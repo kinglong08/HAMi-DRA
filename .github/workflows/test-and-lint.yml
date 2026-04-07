@@ -10,6 +10,8 @@ jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: go1.25.0+auto
     
     steps:
       - name: Checkout repository
@@ -28,7 +30,7 @@ jobs:
         run: make test
 
       - name: Run tests with coverage
-        run: go test -v -coverprofile=coverage.out -covermode=atomic ./...
+        run: make test-coverage
 
       - name: Upload coverage to Codecov
         if: github.event_name == 'pull_request'
@@ -42,6 +44,8 @@ jobs:
   lint:
     name: Run Linter
     runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: go1.25.0+auto
     
     steps:
       - name: Checkout repository
@@ -54,7 +58,21 @@ jobs:
           cache-dependency-path: go.sum
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: latest
-          args: --timeout=5m
+        run: make lint
+
+  helm-template:
+    name: Validate Helm Chart
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Render chart with fake driver enabled
+        run: |
+          helm template hami-dra ./charts/hami-dra \
+            --set drivers.fake.enabled=true \
+            --set drivers.nvidia.enabled=false

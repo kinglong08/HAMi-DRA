@@ -35,6 +35,6 @@ home: https://github.com/Project-HAMi/HAMi-DRA
 sources:
   - https://github.com/Project-HAMi/HAMi-DRA
 
-maintainers:
-  - name: hami-dra
-    url: https://github.com/Project-HAMi/HAMi-DRA
+# maintainers:
+#   - name: hami-dra
+#     url: https://github.com/Project-HAMi/HAMi-DRA

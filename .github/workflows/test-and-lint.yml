@@ -105,7 +105,7 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1.9.0
         with:
-          node_image: kindest/node:v1.32.0  # v1.32+ required for DeviceClass GA API
+          node_image: kindest/node:v1.34.0
 
       - name: Install cert-manager
         run: |

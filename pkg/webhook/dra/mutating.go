@@ -112,12 +112,18 @@ func (a *MutatingAdmission) handelContainer(ctx context.Context, container *core
 		return "", nil
 	}
 
-	// TODO: refactor the name generator to avoid too long name and avoid empty name for generated pod.
 	rcName := fmt.Sprintf("%s-%s-%s", pod.Namespace, pod.Name, container.Name)
 	if pod.Name == "" {
 		rcName = fmt.Sprintf("%s-%s-%s", pod.Namespace, rand.String(5), container.Name)
 	}
-	resourceclaim := a.buildResourceClaim(rcName, pod.Namespace)
+
+	// Create owner reference pointing to the Pod for garbage collection
+	ownerRef := metav1.NewControllerRef(
+		pod,
+		corev1.SchemeGroupVersion.WithKind("Pod"),
+	)
+
+	resourceclaim := a.buildResourceClaim(rcName, pod.Namespace, []metav1.OwnerReference{*ownerRef})
 
 	resourceclaim.Spec.Devices.Requests[0].Exactly.Count = countQty.Value()
 
@@ -145,14 +151,15 @@ func (a *MutatingAdmission) handelContainer(ctx context.Context, container *core
 }
 
 // buildResourceClaim creates a ResourceClaim with default selectors.
-func (a *MutatingAdmission) buildResourceClaim(name, namespace string) *resourceapi.ResourceClaim {
+func (a *MutatingAdmission) buildResourceClaim(name, namespace string, ownerRefs []metav1.OwnerReference) *resourceapi.ResourceClaim {
 	deviceClassName := a.DeviceConfig.EffectiveDeviceClassName()
 	draDriverName := a.DeviceConfig.EffectiveDraDriverName()
 
 	return &resourceapi.ResourceClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:            name,
+			Namespace:       namespace,
+			OwnerReferences: ownerRefs,
 		},
 		Spec: resourceapi.ResourceClaimSpec{
 			Devices: resourceapi.DeviceClaim{

@@ -183,7 +183,7 @@ func TestBuildResourceClaimUsesConfiguredDriver(t *testing.T) {
 		},
 	}
 
-	claim := admission.buildResourceClaim("test-claim", "default", []metav1.OwnerReference{})
+	claim := admission.buildResourceClaim("test-claim", "default", nil)
 	exactly := claim.Spec.Devices.Requests[0].Exactly
 
 	assert.Equal(t, "fake-gpu.project-hami.io", exactly.DeviceClassName)
@@ -203,11 +203,6 @@ func TestBuildResourceClaimWithOwnerReferences(t *testing.T) {
 		},
 	}
 
-	ownerRef := *metav1.NewControllerRef(
-		pod,
-		corev1.SchemeGroupVersion.WithKind("Pod"),
-	)
-
 	admission := &MutatingAdmission{
 		DeviceConfig: &config.NvidiaConfig{
 			DeviceClassName: "hami-core-gpu.project-hami.io",
@@ -215,37 +210,11 @@ func TestBuildResourceClaimWithOwnerReferences(t *testing.T) {
 		},
 	}
 
-	claim := admission.buildResourceClaim("test-claim", "default", []metav1.OwnerReference{ownerRef})
-
+	claim := admission.buildResourceClaim("test-claim", "default", pod)
 	// Verify OwnerReference exists
 	assert.Equal(t, 1, len(claim.ObjectMeta.OwnerReferences))
 	assert.Equal(t, "Pod", claim.ObjectMeta.OwnerReferences[0].Kind)
 	assert.Equal(t, "test-pod", claim.ObjectMeta.OwnerReferences[0].Name)
 	assert.Equal(t, types.UID("pod-uid-123"), claim.ObjectMeta.OwnerReferences[0].UID)
 	assert.True(t, *claim.ObjectMeta.OwnerReferences[0].Controller)
-}
-
-func TestResourceClaimControllerFlagMustBeSet(t *testing.T) {
-	pod := &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-pod",
-			Namespace: "default",
-			UID:       types.UID("test-uid"),
-		},
-	}
-
-	ownerRef := *metav1.NewControllerRef(pod, corev1.SchemeGroupVersion.WithKind("Pod"))
-
-	admission := &MutatingAdmission{
-		DeviceConfig: &config.NvidiaConfig{
-			DeviceClassName: "hami-core-gpu.project-hami.io",
-			DraDriverName:   "hami-core-gpu.project-hami.io",
-		},
-	}
-
-	claim := admission.buildResourceClaim("test-claim", "default", []metav1.OwnerReference{ownerRef})
-
-	assert.NotNil(t, claim.ObjectMeta.OwnerReferences[0].Controller)
-	assert.True(t, *claim.ObjectMeta.OwnerReferences[0].Controller,
-		"Controller flag MUST be true for Kubernetes to cascade deletes")
 }

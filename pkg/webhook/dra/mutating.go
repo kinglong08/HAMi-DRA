@@ -112,16 +112,22 @@ func (a *MutatingAdmission) handelContainer(ctx context.Context, container *core
 		return "", nil
 	}
 
-	// TODO: refactor the name generator to avoid too long name and avoid empty name for generated pod.
 	rcName := fmt.Sprintf("%s-%s-%s", pod.Namespace, pod.Name, container.Name)
 	if pod.Name == "" {
+		// Use random string when pod name is empty to ensure unique resource claim names.
+		// Note: This addresses part of the original TODO about handling empty pod names.
 		rcName = fmt.Sprintf("%s-%s-%s", pod.Namespace, rand.String(5), container.Name)
 	}
-	resourceclaim := a.buildResourceClaim(rcName, pod.Namespace)
 
+	var podToOwn *corev1.Pod
+	if pod.Name != "" {
+		podToOwn = pod
+	}
+
+	resourceclaim := a.buildResourceClaim(rcName, pod.Namespace, podToOwn)
 	resourceclaim.Spec.Devices.Requests[0].Exactly.Count = countQty.Value()
 
-	// Remove count resource from container
+	// Remove count resource from container since it's now represented in the ResourceClaim
 	a.removeResource(container, countResourceName)
 
 	if coreQty, ok := container.Resources.Limits[corev1.ResourceName(a.DeviceConfig.ResourceCoreName)]; ok {
@@ -145,14 +151,25 @@ func (a *MutatingAdmission) handelContainer(ctx context.Context, container *core
 }
 
 // buildResourceClaim creates a ResourceClaim with default selectors.
-func (a *MutatingAdmission) buildResourceClaim(name, namespace string) *resourceapi.ResourceClaim {
+// If pod is provided, it will be set as the owner for garbage collection.
+func (a *MutatingAdmission) buildResourceClaim(name, namespace string, pod *corev1.Pod) *resourceapi.ResourceClaim {
 	deviceClassName := a.DeviceConfig.EffectiveDeviceClassName()
 	draDriverName := a.DeviceConfig.EffectiveDraDriverName()
 
+	var ownerRefs []metav1.OwnerReference
+	if pod != nil {
+		ownerRef := metav1.NewControllerRef(
+			pod,
+			corev1.SchemeGroupVersion.WithKind("Pod"),
+		)
+		ownerRefs = []metav1.OwnerReference{*ownerRef}
+	}
+
 	return &resourceapi.ResourceClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:            name,
+			Namespace:       namespace,
+			OwnerReferences: ownerRefs,
 		},
 		Spec: resourceapi.ResourceClaimSpec{
 			Devices: resourceapi.DeviceClaim{
@@ -194,6 +211,11 @@ func (a *MutatingAdmission) removeResource(container *corev1.Container, resource
 func (a *MutatingAdmission) addAnnotationSelectors(resourceclaim *resourceapi.ResourceClaim, pod *corev1.Pod) {
 	exactly := resourceclaim.Spec.Devices.Requests[0].Exactly
 	draDriverName := a.DeviceConfig.EffectiveDraDriverName()
+
+	// Guard against nil pod or missing annotations to prevent panic
+	if pod == nil || pod.Annotations == nil {
+		return
+	}
 
 	if UUIDStr, ok := pod.Annotations[constants.UseUUIDAnnotation]; ok {
 		UUIDs := strings.Split(UUIDStr, ",")

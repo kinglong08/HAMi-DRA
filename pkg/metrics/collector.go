@@ -126,7 +126,7 @@ func (c *Collector) collectPodMetrics(ch chan<- prometheus.Metric) {
 				deviceBrand = device.Brand
 				deviceProductName = device.ProductName
 				for idx, d := range devices {
-					if d.UUID == result.DeviceName {
+					if d.Name == result.DeviceName {
 						deviceIdx = strconv.Itoa(idx)
 						break
 					}

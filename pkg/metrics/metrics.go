@@ -51,6 +51,3 @@ var (
 	)
 )
 
-func RegisterMetrics(collector *Collector) {
-	prometheus.MustRegister(collector)
-}

@@ -133,7 +133,7 @@ func Run(ctx context.Context, opts *options.Options) error {
 
 	config, err := controllerruntime.GetConfig()
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("failed to get kubeconfig: %w", err)
 	}
 	config.RateLimiter = flowcontrol.NewTokenBucketRateLimiter(opts.KubeAPIQPS, opts.KubeAPIBurst)
 

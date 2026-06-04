@@ -213,7 +213,7 @@ func (n *NodeDevices) onAddClaim(claim *resourceapi.ResourceClaim) {
 				memoryPerDevice := result.ConsumedCapacity[constants.DeviceCapacityMemory]
 				klog.V(5).Infof("Increasing node usage for device %s on node %s: CoresUsed=%d, MemoryUsed=%d",
 					result.Device, nodeName, coresPerDevice.Value(), memoryPerDevice.Value())
-				n.increseNodeUsage(nodeName, result.Device, coresPerDevice.Value(), memoryPerDevice.Value())
+				n.increaseNodeUsage(nodeName, result.Device, coresPerDevice.Value(), memoryPerDevice.Value())
 
 				allocationResult := &AllocationResult{
 					Namespace:  claim.Namespace,
@@ -281,7 +281,7 @@ func (n *NodeDevices) onUpdateClaim(oldClaim, newClaim *resourceapi.ResourceClai
 	n.onAddClaim(newClaim)
 }
 
-func (n *NodeDevices) increseNodeUsage(nodeName, deviceName string, coresPerDevice, memoryPerDevice int64) {
+func (n *NodeDevices) increaseNodeUsage(nodeName, deviceName string, coresPerDevice, memoryPerDevice int64) {
 	n.mu.RLock()
 	nodeInfo := n.Nodes[nodeName]
 	n.mu.RUnlock()

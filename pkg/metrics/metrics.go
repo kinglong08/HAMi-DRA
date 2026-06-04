@@ -26,7 +26,7 @@ var (
 	)
 	nodevGPUCoreLimitDesc = prometheus.NewDesc(
 		"GPUDeviceCoreLimit",
-		"Device memory core limit for a certain GPU",
+		"Device core limit for a certain GPU",
 		[]string{"nodeid", "deviceuuid", "deviceidx", "devicename", "devicebrand", "deviceproductname"}, nil,
 	)
 	nodevGPUMemoryAllocatedDesc = prometheus.NewDesc(

@@ -108,8 +108,8 @@ func (c *Collector) collectPodMetrics(ch chan<- prometheus.Metric) {
 
 	for _, claim := range claims {
 		devices := c.cache.NodeDevices.GetDevices(claim.NodeName)
-		var device *cache.NodeDevice
 		for _, result := range claim.AllocationResults {
+			var device *cache.NodeDevice
 			for _, d := range devices {
 				if d.Name == result.DeviceName {
 					device = d

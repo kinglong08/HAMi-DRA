@@ -18,6 +18,7 @@ package dra
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -114,9 +115,11 @@ func (a *MutatingAdmission) handelContainer(ctx context.Context, container *core
 
 	rcName := fmt.Sprintf("%s-%s-%s", pod.Namespace, pod.Name, container.Name)
 	if pod.Name == "" {
-		// Use random string when pod name is empty to ensure unique resource claim names.
-		// Note: This addresses part of the original TODO about handling empty pod names.
 		rcName = fmt.Sprintf("%s-%s-%s", pod.Namespace, rand.String(5), container.Name)
+	}
+	if len(rcName) > 253 {
+		h := sha256.Sum256([]byte(rcName))
+		rcName = fmt.Sprintf("%s-%x", rcName[:220], h[:4])
 	}
 
 	var podToOwn *corev1.Pod

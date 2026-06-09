@@ -149,7 +149,14 @@ func (c *Cache) onUpdateClaim(oldObj, newObj interface{}) {
 func (c *Cache) onDeleteClaim(obj interface{}) {
 	claim, ok := obj.(*resourceapi.ResourceClaim)
 	if !ok {
-		return
+		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
+		if !ok {
+			return
+		}
+		claim, ok = tombstone.Obj.(*resourceapi.ResourceClaim)
+		if !ok {
+			return
+		}
 	}
 	c.NodeDevices.onDeleteClaim(claim)
 }
@@ -235,7 +242,14 @@ func (c *Cache) onUpdateSlice(oldObj, newObj interface{}) {
 func (c *Cache) onDeleteSlice(obj interface{}) {
 	slice, ok := obj.(*resourceapi.ResourceSlice)
 	if !ok {
-		return
+		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
+		if !ok {
+			return
+		}
+		slice, ok = tombstone.Obj.(*resourceapi.ResourceSlice)
+		if !ok {
+			return
+		}
 	}
 	if slice.Spec.NodeName == nil {
 		klog.Warningf("ResourceSlice %s has no node name, skipping delete", slice.Name)

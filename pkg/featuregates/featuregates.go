@@ -63,11 +63,9 @@ func FeatureGates() featuregate.MutableVersionedFeatureGate {
 		}
 	}
 
-	if featureGates == nil {
-		featureGatesOnce.Do(func() {
-			featureGates = newFeatureGates(relVer.Version)
-		})
-	}
+	featureGatesOnce.Do(func() {
+		featureGates = newFeatureGates(relVer.Version)
+	})
 	return featureGates
 }
 

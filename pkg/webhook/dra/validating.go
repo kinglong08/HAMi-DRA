@@ -70,9 +70,11 @@ func (v *ValidatingAdmission) Handle(ctx context.Context, req admission.Request)
 }
 
 func getResourceClaimName(pod *corev1.Pod) []string {
-	resourceClaimNameList := []string{}
-	for _, resourceClaim := range pod.Spec.ResourceClaims {
-		resourceClaimNameList = append(resourceClaimNameList, resourceClaim.Name)
+	names := make([]string, 0, len(pod.Spec.ResourceClaims))
+	for _, rc := range pod.Spec.ResourceClaims {
+		if rc.ResourceClaimName != nil {
+			names = append(names, *rc.ResourceClaimName)
+		}
 	}
-	return resourceClaimNameList
+	return names
 }

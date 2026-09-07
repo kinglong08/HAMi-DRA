@@ -29,7 +29,7 @@ remove_old_license() {
         if [[ "$line" =~ ^/\* ]]; then
             # Single-line block comments (/* ... */) close on the same line.
             if [[ "$line" =~ \*/ ]]; then
-                skip_until_empty=true
+                skip_until_empty=false
                 continue
             fi
             in_comment=true

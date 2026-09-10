@@ -91,3 +91,7 @@ For whole-card requests only (`hygon.com/hcunum` without `hcumem` / `hcucores`),
 | NVIDIA DRA driver DaemonSet | No | Yes |
 | hami-dra-monitor | No | Yes |
 | HCU DRA driver | External (k8s-hcu-dra-driver) | N/A |
+
+## Testing without DCU hardware
+
+To publish fake `dra.hygon.com` ResourceSlices (including `capacity.slices=4`) instead of installing the real driver, see [fake-dra-driver.md](./fake-dra-driver.md). Do not enable `drivers.fake.profile=hygon` together with a live k8s-hcu-dra-driver: both would claim `DeviceClass` `dra.hygon.com`.

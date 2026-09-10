@@ -37,6 +37,54 @@
 {{- end -}}
 
 {{- define "hami.dra.driver.fake.defaultConfig" -}}
+{{- if eq (include "hami.dra.driver.fake.profile" .) "hygon" -}}
+{{ include "hami.dra.driver.fake.defaultHygonConfig" . }}
+{{- else -}}
+{{ include "hami.dra.driver.fake.defaultNvidiaConfig" . }}
+{{- end -}}
+{{- end -}}
+
+{{- define "hami.dra.driver.fake.profile" -}}
+{{- $profile := .Values.drivers.fake.profile | default "nvidia" -}}
+{{- if and (ne $profile "nvidia") (ne $profile "hygon") -}}
+{{- fail (printf "drivers.fake.profile must be \"nvidia\" or \"hygon\", got %q" $profile) -}}
+{{- end -}}
+{{- $profile -}}
+{{- end -}}
+
+{{- define "hami.dra.driver.fake.deviceClassName" -}}
+{{- if eq (include "hami.dra.driver.fake.profile" .) "hygon" -}}
+{{- if or (not .Values.drivers.fake.deviceClassName) (eq .Values.drivers.fake.deviceClassName "fake-gpu.project-hami.io") -}}
+{{- .Values.dcuDeviceClassName -}}
+{{- else -}}
+{{- .Values.drivers.fake.deviceClassName -}}
+{{- end -}}
+{{- else -}}
+{{- .Values.drivers.fake.deviceClassName | default "fake-gpu.project-hami.io" -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "hami.dra.driver.fake.driverName" -}}
+{{- if eq (include "hami.dra.driver.fake.profile" .) "hygon" -}}
+{{- if or (not .Values.drivers.fake.driverName) (eq .Values.drivers.fake.driverName "fake.dra.hami.io") -}}
+{{- .Values.dcuDraDriverName -}}
+{{- else -}}
+{{- .Values.drivers.fake.driverName -}}
+{{- end -}}
+{{- else -}}
+{{- .Values.drivers.fake.driverName | default "fake.dra.hami.io" -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "hami.dra.driver.fake.deviceType" -}}
+{{- if eq (include "hami.dra.driver.fake.profile" .) "hygon" -}}
+{{- "dcu" -}}
+{{- else -}}
+{{- "hami-gpu" -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "hami.dra.driver.fake.defaultNvidiaConfig" -}}
 groups:
   - name: default-a100
     devices:
@@ -85,6 +133,58 @@ groups:
                 max: 80Gi
                 min: 1Mi
                 step: 1Mi
+{{- end }}
+{{- end -}}
+
+{{- define "hami.dra.driver.fake.defaultHygonConfig" -}}
+{{/*
+  Fake DCU devices aligned with dra.hygon.com ResourceSlice from
+  HYGON-AI/k8s-hcu-dra-driver (K100_AI):
+  attributes: architecture/brand/productName/type/uuid
+  capacity: cores=120, memory=65520Mi, slices=4 (max 4 vHCU per card)
+*/}}
+groups:
+  - name: default-dcu
+    devices:
+{{- range $index := until 8 }}
+      - name: dcu-0000-00-{{ printf "%02d" $index }}-0
+        allowMultipleAllocations: true
+        attributes:
+          architecture:
+            string: ""
+          brand:
+            string: ""
+          productName:
+            string: K100_AI
+          type:
+            string: dcu
+          uuid:
+            string: {{ printf "TPXS3000021%05d" $index }}
+        capacity:
+          cores:
+            value: "120"
+            requestPolicy:
+              default: "120"
+              validRange:
+                max: "120"
+                min: "0"
+                step: "1"
+          memory:
+            value: 65520Mi
+            requestPolicy:
+              default: 65520Mi
+              validRange:
+                max: 65520Mi
+                min: "0"
+                step: 1Mi
+          slices:
+            value: "4"
+            requestPolicy:
+              default: "1"
+              validRange:
+                max: "4"
+                min: "1"
+                step: "1"
 {{- end }}
 {{- end -}}
 

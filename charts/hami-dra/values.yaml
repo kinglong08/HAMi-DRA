@@ -225,10 +225,12 @@ drivers:
       name: ""
       key: config.yaml
       # Optional inline override. When empty, the chart renders a built-in default:
-      # 8 fake NVIDIA A100-SXM4-80GB devices on every node.
+      # 8 fake devices on every node using drivers.fake.profile.
       inlineData: ""
   hcu:
     # Reserved; no HCU driver template in this chart. Deploy k8s-hcu-dra-driver separately.
+    # Keep false when drivers.fake.enabled=true with profile=hygon to avoid a
+    # duplicate DeviceClass name (dra.hygon.com).
     enabled: false
     # Override DeviceClass/driver name in webhook config only.
     # Leave empty to use hcuDeviceClassName / hcuDraDriverName.
